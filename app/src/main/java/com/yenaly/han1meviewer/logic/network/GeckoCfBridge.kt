@@ -52,7 +52,11 @@ class GeckoCfBridge(
         }.onFailure { Log.w(TAG, "ensureBuiltIn 抛异常", it) }
     }
 
-    private fun bindDelegate(ext: WebExtension) {
+    private fun bindDelegate(ext: WebExtension?) {
+        if (ext == null) {
+            Log.w(TAG, "ensureBuiltIn 返回空扩展，跳过 delegate 绑定")
+            return
+        }
         runCatching {
             // extension 级绑定：扩展 background 的 sendNativeMessage 会到这里
             ext.setMessageDelegate(object : WebExtension.MessageDelegate {
