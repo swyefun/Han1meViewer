@@ -196,6 +196,9 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.jsoup)
 
+    // 内嵌 Gecko(Firefox) 内核：Cloudflare 验证页专用（开源 MPL 2.0，无需 root）
+    implementation(libs.geckoview)
+
     // network
 
     implementation(libs.retrofit)

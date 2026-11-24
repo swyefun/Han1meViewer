@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+  "name": "hanime-cf-bridge",
+  "version": "1.0",
+  "description": "Reads Cloudflare cf_clearance cookie and reports it to the native app via native messaging.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "hanime-cf-bridge@yenaly.local"
+    }
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "permissions": [
+    "cookies",
+    "<all_urls>",
+    "nativeMessaging",
+    "geckoViewAddons"
+  ]
+}

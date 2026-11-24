@@ -1,0 +1,77 @@
+# 自包含编译验证 workflow：不依赖任何 GitHub Secrets
+# 目的：验证 GeckoView 内嵌 Cloudflare 验证页改造能正常编译并产出可安装 APK
+name: GeckoView Build
+
+on:
+  push:
+    branches: [ "geckoview-cloudflare" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      # gms / crashlytics 插件在配置阶段强制要求 google-services.json。
+      # 生成一份格式合法、包名匹配的 dummy 配置，仅用于编译验证（不上传任何 Firebase 数据）。
+      - name: Generate dummy google-services.json
+        run: |
+          cat > app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "123456789012",
+              "project_id": "han1meviewer-gv-ci",
+              "storage_bucket": "han1meviewer-gv-ci.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:123456789012:android:1111111111111111",
+                  "android_client_info": { "package_name": "com.yenaly.han1meviewer" }
+                },
+                "oauth_client": [],
+                "api_key": [ { "current_key": "AIzaSyDUMMYKEYFORCI0000000000000000000" } ],
+                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+              },
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:123456789012:android:2222222222222222",
+                  "android_client_info": { "package_name": "com.yenaly.han1meviewer.debug" }
+                },
+                "oauth_client": [],
+                "api_key": [ { "current_key": "AIzaSyDUMMYKEYFORCI0000000000000000000" } ],
+                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug APK (no signing secrets required)
+        run: ./gradlew assembleDebug --stacktrace
+        env:
+          HA1_VERSION_SOURCE: 'ci'
+          HA_GITHUB_TOKEN: 'ci-dummy-token'
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: han1meviewer-geckoview-debug-${{ github.sha }}
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

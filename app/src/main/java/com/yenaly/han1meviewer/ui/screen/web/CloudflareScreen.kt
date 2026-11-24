@@ -1,6 +1,5 @@
 package com.yenaly.han1meviewer.ui.screen.web
 
-import android.webkit.WebView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,34 +13,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.yenaly.han1meviewer.R
 import com.yenaly.han1meviewer.ui.component.appbar.HanimeScaffold
 import com.yenaly.han1meviewer.ui.preview.ComponentPreview
+import org.mozilla.geckoview.GeckoRuntime
 
 
 @Composable
 fun CloudflareScreen(
+    runtime: GeckoRuntime,
+    url: String,
+    userAgent: String,
     progress: Int,
     tipText: String,
     onClose: () -> Unit,
-    webViewFactory: () -> WebView,
+    onProgress: (Int) -> Unit,
 ) {
     HanimeScaffold(
         title = stringResource(R.string.complete_cloudflare_verification),
         onBack = onClose,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-        ) {
-            AndroidView(
-                factory = { webViewFactory() },
+        Box(modifier = Modifier.fillMaxSize()) {
+            GeckoCloudflareView(
+                runtime = runtime,
+                url = url,
+                userAgent = userAgent,
                 modifier = Modifier.fillMaxSize(),
+                onProgress = onProgress,
             )
 
             if (progress in 1..99) {
@@ -75,18 +76,9 @@ fun CloudflareScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun LoginScreenPreview() {
-    val context = LocalContext.current
+fun CloudflareScreenPreview() {
+    // Preview 无真实 GeckoRuntime，仅展示空骨架；运行期由 Activity 提供内核。
     ComponentPreview {
-        CloudflareScreen(
-            progress = 40,
-            tipText = "提示文本",
-            onClose = {},
-            webViewFactory = {
-                WebView(context).apply {
-                }
-            },
-        )
+        Box(modifier = Modifier.fillMaxSize())
     }
 }
-
