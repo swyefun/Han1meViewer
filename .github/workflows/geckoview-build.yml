@@ -86,12 +86,12 @@ jobs:
           m = "app/src/main/AndroidManifest.xml"
           x = io.open(m, encoding="utf-8").read()
           flags = (
-              '        <meta-data android:name="firebase_performance_collection_deactivated" android:value="true" />\n'
-              '        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />\n'
+              '\n        <meta-data android:name="firebase_performance_collection_deactivated" android:value="true" />'
+              '\n        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />'
           )
-          marker = "    <application\n"
-          assert marker in x, "application tag not found"
-          x = x.replace(marker, marker + flags, 1)
+          start = x.index("<application")
+          gt = x.index(">", start)  # application 开标签的结束符
+          x = x[:gt + 1] + flags + x[gt + 1:]
           io.open(m, "w", encoding="utf-8", newline="").write(x)
           print("injected Firebase deactivation flags")
           PY
