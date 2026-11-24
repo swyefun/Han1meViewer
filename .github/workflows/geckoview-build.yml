@@ -43,7 +43,7 @@ jobs:
                   "android_client_info": { "package_name": "com.yenaly.han1meviewer" }
                 },
                 "oauth_client": [],
-                "api_key": [ { "current_key": "AIzaSyDUMMYKEYFORCI0000000000000000000" } ],
+                "api_key": [ { "current_key": "AIzaSyC00000000000000000000000000000000" } ],
                 "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
               },
               {
@@ -52,7 +52,7 @@ jobs:
                   "android_client_info": { "package_name": "com.yenaly.han1meviewer.debug" }
                 },
                 "oauth_client": [],
-                "api_key": [ { "current_key": "AIzaSyDUMMYKEYFORCI0000000000000000000" } ],
+                "api_key": [ { "current_key": "AIzaSyC00000000000000000000000000000000" } ],
                 "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
               }
             ],
@@ -66,6 +66,35 @@ jobs:
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
           "$SDKMANAGER" "platforms;android-37.2"
+
+      # CI 产物用 dummy Firebase 项目，Firebase 后台线程会因无法校验 installation 而崩溃。
+      # 临时把 initFirebase() 置空（仅影响本次 CI 构建，不改仓库源码）。
+      # 这样 Cloudflare 验证页冒烟测试时不启动任何 Firebase 后台线程。
+      - name: Disable Firebase init in CI build
+        run: |
+          python3 - <<'PY'
+          import io
+          p = "app/src/main/java/com/yenaly/han1meviewer/HanimeApplication.kt"
+          s = io.open(p, encoding="utf-8").read()
+          marker = "        initFirebase()"
+          assert marker in s, "initFirebase() call not found"
+          s = s.replace(marker, "        // initFirebase() disabled in CI smoke build", 1)
+          io.open(p, "w", encoding="utf-8", newline="").write(s)
+          print("disabled initFirebase() for CI build")
+
+          # Firebase Performance 会自行插桩初始化，用 manifest 开关彻底关闭采集
+          m = "app/src/main/AndroidManifest.xml"
+          x = io.open(m, encoding="utf-8").read()
+          flags = (
+              '        <meta-data android:name="firebase_performance_collection_deactivated" android:value="true" />\n'
+              '        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />\n'
+          )
+          marker = "    <application\n"
+          assert marker in x, "application tag not found"
+          x = x.replace(marker, marker + flags, 1)
+          io.open(m, "w", encoding="utf-8", newline="").write(x)
+          print("injected Firebase deactivation flags")
+          PY
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
