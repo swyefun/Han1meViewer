@@ -21,10 +21,13 @@ plugins {
 }
 
 android {
-    compileSdk = property("compile.sdk")?.toString()?.toIntOrNull()
-    // GeckoView 160 的 AAR 要求 compileSdk >= 37.2（API 37 extension 2）。
-    // 仅提升编译期 SDK 扩展级别，不改 targetSdk / minSdk。
-    compileSdkExtension = 2
+    // GeckoView 160 的 AAR 要求 compileSdk >= 37.2（API 37 minor 2）。
+    // AGP 9.x 用 compileSdk DSL 指定 minorApiLevel；仅提升编译期 SDK，不改 targetSdk / minSdk。
+    compileSdk {
+        version = release(property("compile.sdk")?.toString()?.toIntOrNull() ?: 37) {
+            minorApiLevel = 2
+        }
+    }
 
     val commitSha = if (isRelease) lastCommitSha else "b8eace8" // 方便调试
 

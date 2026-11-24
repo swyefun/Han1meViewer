@@ -60,6 +60,13 @@ jobs:
           }
           EOF
 
+      # compileSdk 37.2 是独立 SDK 包（API 37 minor 2），runner 默认未安装
+      - name: Install Android SDK platform 37.2
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "platforms;android-37.2"
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
